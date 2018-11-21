@@ -287,7 +287,7 @@ function WebXRManager( renderer, gl ) {
 
 		}
 
-		if ( onAnimationFrameCallback ) onAnimationFrameCallback( time );
+		if ( onAnimationFrameCallback ) onAnimationFrameCallback( time, frame );
 
 	}
 
