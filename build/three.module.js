@@ -22989,6 +22989,7 @@ function WebXRManager( renderer, gl ) {
 	var referenceSpaceType = 'local-floor';
 
 	var pose = null;
+	var poseTarget = null;
 
 	var controllers = [];
 	var inputSources = [];
@@ -23141,12 +23142,19 @@ function WebXRManager( renderer, gl ) {
 
 	}
 
+	this.setPoseTarget = function ( object ) {
+
+		if ( object !== undefined ) poseTarget = object;
+
+	};
+
 	this.getCamera = function ( camera ) {
 
 		if ( isPresenting() ) {
 
 			var parent = camera.parent;
 			var cameras = cameraVR.cameras;
+			var object = poseTarget || camera;
 
 			updateCamera( cameraVR, parent );
 
@@ -23157,10 +23165,9 @@ function WebXRManager( renderer, gl ) {
 			}
 
 			// update camera and its children
+			object.matrixWorld.copy( cameraVR.matrixWorld );
 
-			camera.matrixWorld.copy( cameraVR.matrixWorld );
-
-			var children = camera.children;
+			var children = object.children;
 
 			for ( var i = 0, l = children.length; i < l; i ++ ) {
 
@@ -23175,6 +23182,12 @@ function WebXRManager( renderer, gl ) {
 		}
 
 		return camera;
+
+	};
+
+	this.getCameraPose = function ( ) {
+
+		return pose;
 
 	};
 
@@ -23244,7 +23257,7 @@ function WebXRManager( renderer, gl ) {
 
 		}
 
-		if ( onAnimationFrameCallback ) onAnimationFrameCallback( time );
+		if ( onAnimationFrameCallback ) onAnimationFrameCallback( time, frame );
 
 	}
 
@@ -25698,6 +25711,33 @@ function WebGLRenderer( parameters ) {
 		uniforms.hemisphereLights.needsUpdate = value;
 
 	}
+
+	// this.setTexture2D = setTexture2D;
+	this.setTexture2D = ( function () {
+
+		var warned = false;
+
+		// backwards compatibility: peel texture.texture
+		return function setTexture2D( texture, slot ) {
+
+			if ( texture && texture.isWebGLRenderTarget ) {
+
+				if ( ! warned ) {
+
+					console.warn( "THREE.WebGLRenderer.setTexture2D: don't use render targets as textures. Use their .texture property instead." );
+					warned = true;
+
+				}
+
+				texture = texture.texture;
+
+			}
+
+			textures.setTexture2D( texture, slot );
+
+		};
+
+	}() );
 
 	//
 	this.setFramebuffer = function ( value ) {
@@ -48564,11 +48604,6 @@ Object.assign( WebGLRenderer.prototype, {
 	setTexture: function () {
 
 		console.warn( 'THREE.WebGLRenderer: .setTexture() has been removed.' );
-
-	},
-	setTexture2D: function () {
-
-		console.warn( 'THREE.WebGLRenderer: .setTexture2D() has been removed.' );
 
 	},
 	setTextureCube: function () {
